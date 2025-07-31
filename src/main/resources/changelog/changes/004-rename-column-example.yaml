@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-rename-column-example
+      author: your_name
+      changes:
+        - renameColumn:
+            tableName: accounts
+            oldColumnName: account_number
+            newColumnName: account_iban
+            columnDataType: VARCHAR(255)

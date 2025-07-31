@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-insert-initial-data
+      author: dobri
+      changes:
+        - insert:
+            tableName: accounts
+            columns:
+              - column: {name: account_number, value: 'RS123-0000001'}
+              - column: {name: account_type, value: 'CURRENT'}
+              - column: {name: currency, value: 'RSD'}
+              - column: {name: balance, value: 5000.00}
+              - column: {name: open_date, valueComputed: 'GETDATE()'}
+              - column: {name: status, value: 'ACTIVE'}
+              - column: {name: client_id, value: 101}
+        - insert:
+            tableName: accounts
+            columns:
+              - column: {name: account_number, value: 'RS123-0000002'}
+              - column: {name: account_type, value: 'SAVINGS'}
+              - column: {name: currency, value: 'EUR'}
+              - column: {name: balance, value: 1000.50}
+              - column: {name: open_date, valueComputed: 'GETDATE()'}
+              - column: {name: status, value: 'PENDING'}
+              - column: {name: client_id, value: 102}
+              - column: {name: interest_rate, value: 0.0150} # Za Savings račun

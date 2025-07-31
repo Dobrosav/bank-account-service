@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-add-interest-rate-column
+      author: dobri
+      changes:
+        - addColumn:
+            tableName: accounts
+            columns:
+              - column:
+                  name: interest_rate
+                  type: DECIMAL(5, 4) # Npr. 5.4 = 99.9999%
+                  constraints:
+                    nullable: true
+        - sql: |
+            UPDATE accounts SET interest_rate = 0.0000 WHERE account_type NOT IN ('SAVINGS', 'LOAN');
+            -- Ili, ako želite da postavite podrazumevanu vrednost samo za postojeće račune tipa SAVINGS/LOAN
+            -- UPDATE accounts SET interest_rate = 0.0100 WHERE account_type = 'SAVINGS';
