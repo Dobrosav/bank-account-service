@@ -1,6 +1,8 @@
 package rs.yettelbank.bankaccountservice.service;
 
 import org.apache.coyote.BadRequestException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,8 @@ public class AccountService {
     private static final String BANK_PREFIX = "RS123-";
     private static final AtomicLong accountNumberSequence = new AtomicLong(1000000);
 
+    private static final Logger logger= LoggerFactory.getLogger(AccountService.class);
+
     @Autowired
     public AccountService(AccountRepo accountRepository) {
         this.accountRepository = accountRepository;
@@ -41,12 +45,15 @@ public class AccountService {
 
     @Transactional
     public AccountResponseDTO openNewAccount(OpenAccountRequestDTO request) throws BadRequestException {
+        logger.info("Opening new account for client with ID {} of type {}", request.getClientId(), request.getAccountType());
         if (request.getClientId() == null || request.getClientId() <= 0) {
+            logger.warn("Client ID must be a positive number.");
             throw new BadRequestException("Client ID must be a positive number.");
         }
 
         Optional<Account> existingAccountByType = accountRepository.findByClientIdAndAccountType(request.getClientId(), request.getAccountType());
         if (existingAccountByType.isPresent()) {
+            logger.warn("Client already has an account of type {}. Cannot open another one of the same type.", request.getAccountType());
             throw new BadRequestException("Client already has an account of type " + request.getAccountType() + ". Cannot open another one of the same type.");
         }
 
@@ -60,23 +67,28 @@ public class AccountService {
         account.setStatus(AccountStatus.PENDING);
 
         Account savedAccount = accountRepository.save(account);
-
+        logger.info("New account with ID {} opened for client with ID {} of type {}", savedAccount.getId(), request.getClientId(), request.getAccountType());
         return mapToAccountResponseDTO(savedAccount);
     }
 
     public AccountResponseDTO getAccountById(Long id) {
+        logger.info("Getting account with ID {}", id);
         Account account = accountRepository.findById(id).get();
         if (account == null) {
+            logger.warn("Account with ID {} not found.", id);
             throw new ServiceException(ErrorType.ACCOUNT_NOT_FOUND, HttpStatus.NOT_FOUND);
         }
         return mapToAccountResponseDTO(account);
     }
 
     public AccountResponseDTO getAccountByAccountNumber(String accountNumber) {
+        logger.info("Getting account with account number {}", accountNumber);
         Account account = accountRepository.findByAccountNumber(accountNumber);
         if (account == null) {
+            logger.warn("Account with account number {} not found.", accountNumber);
             throw new ServiceException(ErrorType.ACCOUNT_NOT_FOUND, HttpStatus.NOT_FOUND);
         }
+        logger.info("Account with account number {} found.", accountNumber);
         return mapToAccountResponseDTO(account);
     }
 
@@ -88,6 +100,7 @@ public class AccountService {
     }
 
     public List<AccountResponseDTO> getAccountsByTypeAndStatus(AccountType accountType, AccountStatus status) {
+        logger.info("Getting accounts of type {} and status {}", accountType, status);
         List<Account> accounts;
         if (accountType != null && status != null) {
             accounts = accountRepository.findByAccountTypeAndStatus(accountType, status);
@@ -98,6 +111,7 @@ public class AccountService {
         } else {
             accounts = accountRepository.findAll();
         }
+        logger.info("Found {} accounts of type {} and status {}", accounts.size(), accountType, status);
         return accounts.stream()
                 .map(this::mapToAccountResponseDTO)
                 .collect(Collectors.toList());
@@ -105,32 +119,39 @@ public class AccountService {
 
     @Transactional
     public AccountResponseDTO updateAccountStatus(Long id, AccountStatus newStatus) throws BadRequestException {
+        logger.info("Updating account with ID {} to status {}", id, newStatus);
         Account account = accountRepository.findById(id).get();
         if (account == null) {
+            logger.warn("Account with ID {} not found.", id);
             throw new ServiceException(ErrorType.ACCOUNT_NOT_FOUND, HttpStatus.NOT_FOUND);
         }
 
         if (account.getStatus() == AccountStatus.CLOSED && newStatus != AccountStatus.CLOSED) {
+            logger.warn("Cannot reactivate a closed account.");
             throw new BadRequestException("Cannot reactivate a closed account.");
         }
 
         account.setStatus(newStatus);
         Account updatedAccount = accountRepository.save(account);
+        logger.info("Account with ID {} updated to status {}", id, newStatus);
         return mapToAccountResponseDTO(updatedAccount);
     }
 
     @Transactional
     public AccountResponseDTO updateAccountBalance(Long id, BigDecimal amount, TransactionType type) throws BadRequestException {
+        logger.info("Updating account with ID {} to balance {} with transaction type {}", id, amount, type);
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BadRequestException("Amount must be positive.");
         }
 
         Account account = accountRepository.findById(id).get();
         if (account == null) {
+            logger.warn("Account with ID {} not found.", id);
             throw new ServiceException(ErrorType.ACCOUNT_NOT_FOUND, HttpStatus.NOT_FOUND);
         }
 
         if (account.getStatus() != AccountStatus.ACTIVE) {
+            logger.warn("Cannot perform transactions on an account that is not ACTIVE. Current status: {}",  account.getStatus());
             throw new BadRequestException("Cannot perform transactions on an account that is not ACTIVE. Current status: " + account.getStatus());
         }
 
@@ -150,26 +171,32 @@ public class AccountService {
 
         account.setBalance(newBalance);
         Account updatedAccount = accountRepository.save(account);
+        logger.info("Account with ID {} updated to balance {} with transaction type {}", id, newBalance, type);
         return mapToAccountResponseDTO(updatedAccount);
     }
 
     @Transactional
     public AccountResponseDTO closeAccount(Long id) throws BadRequestException {
+        logger.info("Closing account with ID {}", id);
         Account account = accountRepository.findById(id).get();
         if (account == null) {
+            logger.warn("Account with ID {} not found.", id);
             throw new ServiceException(ErrorType.ACCOUNT_NOT_FOUND, HttpStatus.NOT_FOUND);
         }
 
         if (account.getBalance().compareTo(BigDecimal.ZERO) != 0) {
+            logger.warn("Account balance must be 0 before closing. Current balance: {}",  account.getBalance());
             throw new BadRequestException("Account balance must be 0 before closing. Current balance: " + account.getBalance());
         }
 
         if (account.getStatus() == AccountStatus.CLOSED) {
+            logger.warn("Account with ID {} is already closed.", id);
             throw new BadRequestException("Account with ID " + id + " is already closed.");
         }
 
         account.setStatus(AccountStatus.CLOSED);
         Account closedAccount = accountRepository.save(account);
+        logger.info("Account with ID {} closed.", id);
         return mapToAccountResponseDTO(closedAccount);
     }
 

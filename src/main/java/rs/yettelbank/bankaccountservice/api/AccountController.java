@@ -15,7 +15,7 @@ import rs.yettelbank.bankaccountservice.service.AccountService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/accounts")
+@RequestMapping("/api/v1/accounts")
 public class AccountController {
 
     private final AccountService accountService;
