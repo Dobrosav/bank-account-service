@@ -29,6 +29,17 @@ public class ApiGlobalErrorHandler {
     private static final int API_CODE = 460;
 
 
+    @ExceptionHandler(AccountNotFoundException.class)
+    @ResponseStatus(value = HttpStatus.NOT_FOUND)
+    protected ResponseEntity<ApiResponseWrapper<ApiErrorResponse>> handleAccountNotFoundException(AccountNotFoundException ex) {
+        LOG.warn("AccountNotFoundException occurred: {}", ex.getMessage());
+        ApiErrorResponse errorResponse = new ApiErrorResponse(
+                HttpStatus.NOT_FOUND.value() + "." + API_CODE + "." + ErrorType.ACCOUNT_NOT_FOUND.getCode(),
+                ex.getMessage()
+        );
+        return new ResponseEntity<>(new ApiResponseWrapper<>(errorResponse), HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(BadRequestException.class)
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     protected ResponseEntity handleBadRequestException(BadRequestException ex) {

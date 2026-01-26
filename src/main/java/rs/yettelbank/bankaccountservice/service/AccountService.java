@@ -11,6 +11,7 @@ import rs.yettelbank.bankaccountservice.api.model.request.OpenAccountRequestDTO;
 import rs.yettelbank.bankaccountservice.api.model.response.AccountResponseDTO;
 import rs.yettelbank.bankaccountservice.db.entity.Account;
 import rs.yettelbank.bankaccountservice.db.repo.AccountRepo;
+import rs.yettelbank.bankaccountservice.exception.AccountNotFoundException;
 import rs.yettelbank.bankaccountservice.exception.ErrorType;
 import rs.yettelbank.bankaccountservice.exception.ServiceException;
 import rs.yettelbank.bankaccountservice.mapper.MapperDtoJpa;
@@ -73,11 +74,9 @@ public class AccountService {
 
     public AccountResponseDTO getAccountById(Long id) {
         logger.info("Getting account with ID {}", id);
-        Account account = accountRepository.findById(id).get();
-        if (account == null) {
-            logger.warn("Account with ID {} not found.", id);
-            throw new ServiceException(ErrorType.ACCOUNT_NOT_FOUND, HttpStatus.NOT_FOUND);
-        }
+        Account account = accountRepository.findById(id)
+                .orElseThrow(() -> new AccountNotFoundException("Account with ID " + id + " not found."));
+
         return mapToAccountResponseDTO(account);
     }
 
@@ -120,11 +119,9 @@ public class AccountService {
     @Transactional
     public AccountResponseDTO updateAccountStatus(Long id, AccountStatus newStatus) throws BadRequestException {
         logger.info("Updating account with ID {} to status {}", id, newStatus);
-        Account account = accountRepository.findById(id).get();
-        if (account == null) {
-            logger.warn("Account with ID {} not found.", id);
-            throw new ServiceException(ErrorType.ACCOUNT_NOT_FOUND, HttpStatus.NOT_FOUND);
-        }
+        Account account = accountRepository.findById(id)
+                .orElseThrow(() -> new AccountNotFoundException("Account with ID " + id + " not found."));
+
 
         if (account.getStatus() == AccountStatus.CLOSED && newStatus != AccountStatus.CLOSED) {
             logger.warn("Cannot reactivate a closed account.");
@@ -144,11 +141,9 @@ public class AccountService {
             throw new BadRequestException("Amount must be positive.");
         }
 
-        Account account = accountRepository.findById(id).get();
-        if (account == null) {
-            logger.warn("Account with ID {} not found.", id);
-            throw new ServiceException(ErrorType.ACCOUNT_NOT_FOUND, HttpStatus.NOT_FOUND);
-        }
+        Account account = accountRepository.findById(id)
+                .orElseThrow(() -> new AccountNotFoundException("Account with ID " + id + " not found."));
+
 
         if (account.getStatus() != AccountStatus.ACTIVE) {
             logger.warn("Cannot perform transactions on an account that is not ACTIVE. Current status: {}",  account.getStatus());
@@ -178,11 +173,9 @@ public class AccountService {
     @Transactional
     public AccountResponseDTO closeAccount(Long id) throws BadRequestException {
         logger.info("Closing account with ID {}", id);
-        Account account = accountRepository.findById(id).get();
-        if (account == null) {
-            logger.warn("Account with ID {} not found.", id);
-            throw new ServiceException(ErrorType.ACCOUNT_NOT_FOUND, HttpStatus.NOT_FOUND);
-        }
+        Account account = accountRepository.findById(id)
+                .orElseThrow(() -> new AccountNotFoundException("Account with ID " + id + " not found."));
+
 
         if (account.getBalance().compareTo(BigDecimal.ZERO) != 0) {
             logger.warn("Account balance must be 0 before closing. Current balance: {}",  account.getBalance());
