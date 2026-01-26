@@ -1,0 +1,42 @@
+services:
+  app:
+    build: .
+    ports:
+      - "11056:11056"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:sqlserver://db:1433;databaseName=bank;encrypt=false;trustServerCertificate=true
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=Password123
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - bank-network
+
+  db:
+    image: "mcr.microsoft.com/azure-sql-edge"
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Password123
+    ports:
+      - "1433:1433"
+    volumes:
+      - ./init-db.sh:/init-db.sh
+      - ./init.sql:/init.sql
+      - sqlserver_data:/var/opt/mssql
+    command: /init-db.sh
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "Password123", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - bank-network
+
+networks:
+  bank-network:
+    driver: bridge
+
+volumes:
+  sqlserver_data: {}
