@@ -38,7 +38,7 @@ This microservice provides a comprehensive API for bank account management opera
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/bank-account-service.git
+   git clone https://github.com/Dobrosav/bank-account-service.git
    ```
 2. Navigate to the project directory:
    ```bash
@@ -51,22 +51,21 @@ This microservice provides a comprehensive API for bank account management opera
 
 ## 🏃 Running the Service
 
-### Using Maven
+
+
+### Using Docker Compose
+
+To run the service using Docker Compose, execute the following command in the root directory of the project:
 
 ```bash
-mvn spring-boot:run
+docker-compose up
 ```
 
-### Using Docker
+This will build the Docker image if it's not already built and start the application and the database. If you want to force a rebuild of the image, you can use:
 
-1. Build the Docker image:
-   ```bash
-   docker build -t bank-account-service .
-   ```
-2. Run the Docker container:
-   ```bash
-   docker run -p 11056:11056 bank-account-service
-   ```
+```bash
+docker-compose up --build
+```
 
 The application will be available at `http://localhost:11056`.
 
