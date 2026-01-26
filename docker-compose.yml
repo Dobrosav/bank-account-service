@@ -12,7 +12,8 @@ services:
         condition: service_healthy
     networks:
       - bank-network
-
+    volumes:
+      - ./logs:/app/logs
   db:
     image: "mcr.microsoft.com/azure-sql-edge"
     environment:
