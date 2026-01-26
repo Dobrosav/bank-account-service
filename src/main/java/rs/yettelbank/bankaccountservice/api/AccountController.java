@@ -46,7 +46,7 @@ public class AccountController {
             @ApiResponse(responseCode = "404", description = "Account not found")
     })
     @GetMapping("/{id}")
-    public ResponseEntity<AccountResponseDTO> getAccountById(@PathVariable Long id) {
+    public ResponseEntity<AccountResponseDTO> getAccountById(@PathVariable(name = "id") Long id) {
         AccountResponseDTO account = accountService.getAccountById(id);
         return ResponseEntity.ok(account);
     }
@@ -57,7 +57,7 @@ public class AccountController {
             @ApiResponse(responseCode = "404", description = "Account not found")
     })
     @GetMapping("/number/{accountNumber}")
-    public ResponseEntity<AccountResponseDTO> getAccountByAccountNumber(@PathVariable String accountNumber) {
+    public ResponseEntity<AccountResponseDTO> getAccountByAccountNumber(@PathVariable(name = "accountNumber") String accountNumber) {
         AccountResponseDTO account = accountService.getAccountByAccountNumber(accountNumber);
         return ResponseEntity.ok(account);
     }
@@ -65,7 +65,7 @@ public class AccountController {
     @Operation(summary = "Get all accounts for a client")
     @ApiResponse(responseCode = "200", description = "List of accounts retrieved successfully")
     @GetMapping("/client/{clientId}")
-    public ResponseEntity<List<AccountResponseDTO>> getAccountsByClientId(@PathVariable Long clientId) {
+    public ResponseEntity<List<AccountResponseDTO>> getAccountsByClientId(@PathVariable(name = "clientId") Long clientId) {
         List<AccountResponseDTO> accounts = accountService.getAccountsByClientId(clientId);
         return ResponseEntity.ok(accounts);
     }
@@ -77,7 +77,7 @@ public class AccountController {
             @ApiResponse(responseCode = "404", description = "Account not found")
     })
     @PutMapping("/{id}/status")
-    public ResponseEntity<AccountResponseDTO> updateAccountStatus(@PathVariable Long id,
+    public ResponseEntity<AccountResponseDTO> updateAccountStatus(@PathVariable(name = "id") Long id,
                                                                   @Valid @RequestBody UpdateAccountStatusRequestDTO request) throws BadRequestException {
         AccountResponseDTO updatedAccount = accountService.updateAccountStatus(id, request.getStatus());
         return ResponseEntity.ok(updatedAccount);
@@ -90,7 +90,7 @@ public class AccountController {
             @ApiResponse(responseCode = "404", description = "Account not found")
     })
     @PutMapping("/{id}/deposit")
-    public ResponseEntity<AccountResponseDTO> deposit(@PathVariable Long id,
+    public ResponseEntity<AccountResponseDTO> deposit(@PathVariable(name = "id") Long id,
                                                       @Valid @RequestBody UpdateBalanceRequestDTO request) throws BadRequestException {
         AccountResponseDTO updatedAccount = accountService.updateAccountBalance(id, request.getAmount(), TransactionType.DEPOSIT);
         return ResponseEntity.ok(updatedAccount);
@@ -103,7 +103,7 @@ public class AccountController {
             @ApiResponse(responseCode = "404", description = "Account not found")
     })
     @PutMapping("/{id}/withdraw")
-    public ResponseEntity<AccountResponseDTO> withdraw(@PathVariable Long id,
+    public ResponseEntity<AccountResponseDTO> withdraw(@PathVariable(name = "id") Long id,
                                                        @Valid @RequestBody UpdateBalanceRequestDTO request) throws BadRequestException {
         AccountResponseDTO updatedAccount = accountService.updateAccountBalance(id, request.getAmount(), TransactionType.WITHDRAWAL);
         return ResponseEntity.ok(updatedAccount);
@@ -116,7 +116,7 @@ public class AccountController {
             @ApiResponse(responseCode = "404", description = "Account not found")
     })
     @PutMapping("/{id}/close")
-    public ResponseEntity<AccountResponseDTO> closeAccount(@PathVariable Long id) throws BadRequestException {
+    public ResponseEntity<AccountResponseDTO> closeAccount(@PathVariable(name = "id") Long id) throws BadRequestException {
         AccountResponseDTO closedAccount = accountService.closeAccount(id);
         return ResponseEntity.ok(closedAccount);
     }
