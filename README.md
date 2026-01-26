@@ -17,7 +17,7 @@ This microservice provides a comprehensive API for bank account management opera
 
 ## 🛠️ Technology Stack
 
-- **Java 24**: Latest Java SDK
+- **Java 21**: Latest Java SDK
 - **Spring Boot**: Application framework
 - **Spring MVC**: Web layer
 - **Spring Data JPA**: Data persistence layer
@@ -30,26 +30,15 @@ This microservice provides a comprehensive API for bank account management opera
 
 ### Prerequisites
 
-- Java 24
+- Java 21
 - Maven 3.6+
-- Docker (optional)
+- Docker
 
 ### Installation
-
-1. Clone the repository:
+ Clone the repository:
    ```bash
    git clone https://github.com/Dobrosav/bank-account-service.git
    ```
-2. Navigate to the project directory:
-   ```bash
-   cd bank-account-service
-   ```
-3. Build the project:
-   ```bash
-   mvn clean install
-   ```
-
-## 🏃 Running the Service
 
 
 
