@@ -33,7 +33,7 @@ public class AccountService {
     private static final String BANK_PREFIX = "RS123-";
     private static final AtomicLong accountNumberSequence = new AtomicLong(1000000);
 
-    private static final Logger logger= LoggerFactory.getLogger(AccountService.class);
+    private static final Logger logger = LoggerFactory.getLogger(AccountService.class);
 
     @Autowired
     public AccountService(AccountRepo accountRepository) {
@@ -146,7 +146,7 @@ public class AccountService {
 
 
         if (account.getStatus() != AccountStatus.ACTIVE) {
-            logger.warn("Cannot perform transactions on an account that is not ACTIVE. Current status: {}",  account.getStatus());
+            logger.warn("Cannot perform transactions on an account that is not ACTIVE. Current status: {}", account.getStatus());
             throw new BadRequestException("Cannot perform transactions on an account that is not ACTIVE. Current status: " + account.getStatus());
         }
 
@@ -178,7 +178,7 @@ public class AccountService {
 
 
         if (account.getBalance().compareTo(BigDecimal.ZERO) != 0) {
-            logger.warn("Account balance must be 0 before closing. Current balance: {}",  account.getBalance());
+            logger.warn("Account balance must be 0 before closing. Current balance: {}", account.getBalance());
             throw new BadRequestException("Account balance must be 0 before closing. Current balance: " + account.getBalance());
         }
 

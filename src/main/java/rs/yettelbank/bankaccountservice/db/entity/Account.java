@@ -62,6 +62,7 @@ public class Account {
         this.clientId = clientId;
         this.interestRate = interestRate;
     }
+
     public Long getId() {
         return id;
     }

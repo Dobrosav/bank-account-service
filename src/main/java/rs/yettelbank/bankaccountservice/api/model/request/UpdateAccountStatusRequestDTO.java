@@ -1,4 +1,5 @@
 package rs.yettelbank.bankaccountservice.api.model.request;
+
 import jakarta.validation.constraints.NotNull;
 import rs.yettelbank.bankaccountservice.model.AccountStatus;
 
