@@ -2,7 +2,7 @@
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
-    <property name="LOG_FILE" value="/app/logs/bank-account-service.log"/>
+    <property name="LOG_FILE" value="target/logs/bank-account-service.log"/>
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -13,7 +13,7 @@
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_FILE}</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>/app/logs/archived/bank-account-service-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>target/logs/archived/bank-account-service-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>10MB</maxFileSize>
             <maxHistory>30</maxHistory>
             <totalSizeCap>1GB</totalSizeCap>
