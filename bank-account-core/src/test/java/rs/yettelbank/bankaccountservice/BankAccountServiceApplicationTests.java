@@ -3,9 +3,10 @@ package rs.yettelbank.bankaccountservice;
 import org.apache.coyote.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.kafka.core.KafkaTemplate;
+import rs.yettelbank.bankaccountservice.api.model.event.TransactionEventDTO;
 import rs.yettelbank.bankaccountservice.api.model.request.OpenAccountRequestDTO;
 import rs.yettelbank.bankaccountservice.api.model.response.AccountResponseDTO;
 import rs.yettelbank.bankaccountservice.db.entity.Account;
@@ -28,13 +29,15 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
 
-class BankAccountServiceApplicationTests extends AbstractIntegrationTest{
+class BankAccountServiceApplicationTests extends AbstractIntegrationTest {
 
-
-    @Mock
+    @MockBean
     private AccountRepo accountRepository;
 
-    @InjectMocks
+    @MockBean
+    private KafkaTemplate<String, TransactionEventDTO> kafkaTemplate;
+
+    @Autowired
     private AccountService accountService;
 
     private Account testAccount;
@@ -65,8 +68,16 @@ class BankAccountServiceApplicationTests extends AbstractIntegrationTest{
         request.setClientId(100L);
         request.setAccountType(AccountType.CURRENT);
 
+        Account pendingAccount = new Account();
+        pendingAccount.setId(1L);
+        pendingAccount.setClientId(100L);
+        pendingAccount.setAccountNumber("RS123-0000001");
+        pendingAccount.setAccountType(AccountType.CURRENT);
+        pendingAccount.setStatus(AccountStatus.PENDING);
+        pendingAccount.setBalance(BigDecimal.ZERO);
+
         when(accountRepository.findByClientIdAndAccountType(anyLong(), any())).thenReturn(Optional.empty());
-        when(accountRepository.save(any(Account.class))).thenReturn(testAccount);
+        when(accountRepository.save(any(Account.class))).thenReturn(pendingAccount);
 
         // Act
         AccountResponseDTO response = accountService.openNewAccount(request);
@@ -75,7 +86,7 @@ class BankAccountServiceApplicationTests extends AbstractIntegrationTest{
         assertNotNull(response);
         assertEquals(testAccount.getClientId(), response.getClientId());
         assertTrue(response.getAccountNumber().startsWith("RS123-"));
-        assertEquals(AccountStatus.ACTIVE, response.getStatus());
+        assertEquals(AccountStatus.PENDING, response.getStatus());
     }
 
     @Test
@@ -121,8 +132,26 @@ class BankAccountServiceApplicationTests extends AbstractIntegrationTest{
     @Test
     void updateAccountStatus_Success() throws BadRequestException {
         // Arrange
-        when(accountRepository.findById(1L)).thenReturn(Optional.of(testAccount));
-        when(accountRepository.save(any(Account.class))).thenReturn(testAccount);
+        Account accountToUpdate = new Account();
+        accountToUpdate.setId(1L);
+        accountToUpdate.setClientId(100L);
+        accountToUpdate.setAccountNumber("RS123-1000000");
+        accountToUpdate.setAccountType(AccountType.CURRENT);
+        accountToUpdate.setStatus(AccountStatus.ACTIVE);
+        accountToUpdate.setBalance(BigDecimal.valueOf(1000));
+        accountToUpdate.setOpenDate(LocalDate.now());
+
+        Account closedAccount = new Account();
+        closedAccount.setId(1L);
+        closedAccount.setClientId(100L);
+        closedAccount.setAccountNumber("RS123-1000000");
+        closedAccount.setAccountType(AccountType.CURRENT);
+        closedAccount.setStatus(AccountStatus.CLOSED);
+        closedAccount.setBalance(BigDecimal.valueOf(1000));
+        closedAccount.setOpenDate(LocalDate.now());
+
+        when(accountRepository.findById(1L)).thenReturn(Optional.of(accountToUpdate));
+        when(accountRepository.save(any(Account.class))).thenReturn(closedAccount);
 
         // Act
         AccountResponseDTO response = accountService.updateAccountStatus(1L, AccountStatus.CLOSED);
@@ -135,11 +164,22 @@ class BankAccountServiceApplicationTests extends AbstractIntegrationTest{
     @Test
     void updateAccountBalance_DepositSuccess() throws BadRequestException {
         // Arrange
-        when(accountRepository.findById(1L)).thenReturn(Optional.of(testAccount));
-        when(accountRepository.save(any(Account.class))).thenReturn(testAccount);
-
         BigDecimal depositAmount = BigDecimal.valueOf(500);
         BigDecimal expectedBalance = testAccount.getBalance().add(depositAmount);
+
+        Account updatedAccount = new Account();
+        updatedAccount.setId(1L);
+        updatedAccount.setClientId(100L);
+        updatedAccount.setAccountNumber("RS123-1000000");
+        updatedAccount.setAccountType(AccountType.CURRENT);
+        updatedAccount.setStatus(AccountStatus.ACTIVE);
+        updatedAccount.setBalance(expectedBalance);
+        updatedAccount.setOpenDate(LocalDate.now());
+
+        when(accountRepository.findById(1L)).thenReturn(Optional.of(testAccount));
+        when(accountRepository.save(any(Account.class))).thenReturn(updatedAccount);
+
+
 
         // Act
         AccountResponseDTO response = accountService.updateAccountBalance(1L, depositAmount, TransactionType.DEPOSIT);
@@ -164,9 +204,26 @@ class BankAccountServiceApplicationTests extends AbstractIntegrationTest{
     @Test
     void closeAccount_Success() throws BadRequestException {
         // Arrange
-        testAccount.setBalance(BigDecimal.ZERO);
-        when(accountRepository.findById(1L)).thenReturn(Optional.of(testAccount));
-        when(accountRepository.save(any(Account.class))).thenReturn(testAccount);
+        Account zeroBalanceAccount = new Account();
+        zeroBalanceAccount.setId(1L);
+        zeroBalanceAccount.setClientId(100L);
+        zeroBalanceAccount.setAccountNumber("RS123-1000000");
+        zeroBalanceAccount.setAccountType(AccountType.CURRENT);
+        zeroBalanceAccount.setStatus(AccountStatus.ACTIVE);
+        zeroBalanceAccount.setBalance(BigDecimal.ZERO);
+        zeroBalanceAccount.setOpenDate(LocalDate.now());
+
+        Account closedAccount = new Account();
+        closedAccount.setId(1L);
+        closedAccount.setClientId(100L);
+        closedAccount.setAccountNumber("RS123-1000000");
+        closedAccount.setAccountType(AccountType.CURRENT);
+        closedAccount.setStatus(AccountStatus.CLOSED);
+        closedAccount.setBalance(BigDecimal.ZERO);
+        closedAccount.setOpenDate(LocalDate.now());
+
+        when(accountRepository.findById(1L)).thenReturn(Optional.of(zeroBalanceAccount));
+        when(accountRepository.save(any(Account.class))).thenReturn(closedAccount);
 
         // Act
         AccountResponseDTO response = accountService.closeAccount(1L);
