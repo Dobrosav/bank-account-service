@@ -5,8 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.yettelbank.bankaccountservice.api.model.event.TransactionEventDTO;
 import rs.yettelbank.bankaccountservice.api.model.request.OpenAccountRequestDTO;
 import rs.yettelbank.bankaccountservice.api.model.response.AccountResponseDTO;
 import rs.yettelbank.bankaccountservice.db.entity.Account;
@@ -32,12 +34,15 @@ public class AccountService {
     private final AccountRepo accountRepository;
     private static final String BANK_PREFIX = "RS123-";
     private static final AtomicLong accountNumberSequence = new AtomicLong(1000000);
+    private final KafkaTemplate<String, TransactionEventDTO> kafkaTemplate;
+    private static final String TOPIC_NAME = "bank-transactions";
 
     private static final Logger logger = LoggerFactory.getLogger(AccountService.class);
 
     @Autowired
-    public AccountService(AccountRepo accountRepository) {
+    public AccountService(AccountRepo accountRepository, KafkaTemplate<String, TransactionEventDTO> kafkaTemplate) {
         this.accountRepository = accountRepository;
+        this.kafkaTemplate = kafkaTemplate;
     }
 
     private String generateAccountNumber() {
@@ -167,6 +172,11 @@ public class AccountService {
         account.setBalance(newBalance);
         Account updatedAccount = accountRepository.save(account);
         logger.info("Account with ID {} updated to balance {} with transaction type {}", id, newBalance, type);
+
+        TransactionEventDTO event = new TransactionEventDTO(id, amount, type);
+        kafkaTemplate.send(TOPIC_NAME, String.valueOf(id), event);
+        logger.info("Transaction event sent to Kafka topic {} for account with ID {}", TOPIC_NAME, id);
+
         return mapToAccountResponseDTO(updatedAccount);
     }
 

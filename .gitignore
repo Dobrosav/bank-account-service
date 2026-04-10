@@ -1,5 +1,6 @@
 HELP.md
-target/
+notification-service/target
+bank-account-core/target
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

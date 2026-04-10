@@ -1,0 +1,11 @@
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /app
+COPY . .
+RUN mvn clean install -DskipTests
+
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+# Izvlačimo samo notification-service JAR fajl
+COPY --from=build /app/notification-service/target/*.jar ./notification-service.jar
+EXPOSE 11057
+ENTRYPOINT ["java", "-jar", "notification-service.jar"]
