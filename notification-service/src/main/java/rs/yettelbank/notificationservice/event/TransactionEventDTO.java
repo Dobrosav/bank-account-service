@@ -44,4 +44,13 @@ public class TransactionEventDTO {
     public void setType(TransactionType type) {
         this.type = type;
     }
+
+    @Override
+    public String toString() {
+        return "TransactionEventDTO{" +
+                "accountId=" + accountId +
+                ", amount=" + amount +
+                ", type=" + type +
+                '}';
+    }
 }
