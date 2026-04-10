@@ -1,127 +1,132 @@
-# Bank Account Microservice
+# Bank Account Microservices Ecosystem
 
-A RESTful microservice for managing bank accounts built with Spring Boot and Jakarta EE.
+An Event-Driven Microservices ecosystem for managing bank accounts built with Spring Boot, Jakarta EE, and Apache Kafka.
 
 ## 📋 Overview
 
-This microservice provides a comprehensive API for bank account management operations including account creation, retrieval, updates, and closure. It's designed following modern microservice architecture principles with a focus on reliability, scalability, and maintainability.
+This repository demonstrates a modern, scalable enterprise architecture. It features an event-driven microservices ecosystem designed as a Maven multi-module project. It utilizes Apache Kafka for asynchronous, decoupled communication between services, ensuring high performance and fault tolerance.
+
+## 🏗️ Architecture: From Monolith to Event-Driven
+
+This project showcases the evolution from a traditional monolithic application to a decoupled, event-driven architecture. 
+
+The system currently consists of two independent microservices communicating asynchronously via a message broker:
+
+1. **Bank Account Core (`bank-account-core`)**: The primary **Producer** service. It handles HTTP requests, executes core business logic (creating accounts, processing deposits/withdrawals), persists data to an MS SQL database, and publishes `TransactionEvent` messages to a Kafka topic.
+2. **Notification Service (`notification-service`)**: The **Consumer** service. It independently listens to the Kafka topic. If it detects a specific business event (e.g., a withdrawal exceeding a defined threshold of 10,000), it triggers a notification workflow without impacting or blocking the core banking service.
+
+**Message Broker:** Apache Kafka (running in modern KRaft mode).
+
+---
+
+## 🛠️ Implementation Guide (Step-by-Step Evolution)
+
+If you are exploring this codebase, here is a breakdown of how the event-driven architecture was implemented:
+
+### Step 1: Maven Multi-Module Restructuring
+To keep the codebase organized within a single repository (Monorepo), a parent `pom.xml` with `<packaging>pom</packaging>` was created. The core application logic was moved to the `bank-account-core` module, and a new `notification-service` module was scaffolded.
+
+### Step 2: Infrastructure via Docker Compose
+Instead of relying on local installations, the infrastructure was fully containerized. The `docker-compose.yml` was updated to include:
+* **MS SQL Server** for data persistence.
+* **Apache Kafka** (`apache/kafka:3.7.0`) running in **KRaft mode** (eliminating the need for Zookeeper).
+
+### Step 3: The Producer (Core Service)
+* Added `spring-kafka` dependency.
+* Configured `KafkaTemplate` with `JsonSerializer`.
+* Created a `TransactionEventDTO` representing the event state.
+* Updated the `AccountService` to emit an event to the `bank-transactions` topic upon successful deposit or withdrawal operations.
+
+### Step 4: The Consumer (Notification Service)
+* Created a lightweight Spring Boot app mirroring the `TransactionEventDTO`.
+* Configured JSON Type Mapping in `application.properties` to allow seamless deserialization from the producer's package to the consumer's package.
+* Implemented a `@KafkaListener` to consume messages, evaluate business rules, and trigger actions asynchronously.
+
+### Step 5: Independent Dockerization
+To ensure true microservice isolation, standardizing deployments was necessary:
+* Created specific Dockerfiles (`Dockerfile.bank` and `Dockerfile.notification`) utilizing multi-stage Maven builds.
+* Orchestrated the entire ecosystem through `docker-compose.yml`, allowing both services to build and communicate over a shared internal Docker network.
+
+---
 
 ## ✨ Features
 
 - **Account Management**: Create, read, update, and close bank accounts.
+- **Event-Driven Communication**: Asynchronous messaging using Apache Kafka.
+- **Multi-Module Structure**: Clean separation of concerns using a parent Maven POM.
 - **RESTful API**: Clean and intuitive REST endpoints.
 - **API Documentation**: Interactive Swagger/OpenAPI documentation.
 - **Data Persistence**: Spring Data JPA with database support.
 - **Validation**: Jakarta Bean Validation for data integrity.
-- **Exception Handling**: Comprehensive error handling and responses.
+- **Exception Handling**: Comprehensive error handling and unified API responses.
 
-## 🛠️ Technology Stack
+## 💻 Technology Stack
 
 - **Java 21**: Latest Java SDK
-- **Spring Boot**: Application framework
-- **Spring MVC**: Web layer
-- **Spring Data JPA**: Data persistence layer
+- **Spring Boot 3.3**: Application framework
+- **Apache Kafka**: Message broker for event streaming
+- **Spring Kafka**: Spring integration for Kafka producers and consumers
+- **Spring MVC & Data JPA**: Web and data persistence layers
 - **Jakarta EE**: Enterprise Java specifications
+- **MS SQL Server**: Relational database
 - **Swagger/OpenAPI 3**: API documentation
-- **Maven**: Dependency management and build tool
-- **Docker**: Containerization
+- **Docker & Docker Compose**: Containerization and orchestration
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-
 - Java 21
 - Maven 3.6+
-- Docker
+- Docker & Docker Compose
 
-### Installation
- Clone the repository:
-   ```bash
-   git clone https://github.com/Dobrosav/bank-account-service.git
-   ```
+### Running the Ecosystem (Docker Compose)
 
+The easiest way to start the entire system (Database, Kafka Broker, Core Service, and Notification Service) is via Docker Compose.
 
-
-### Using Docker Compose
-
-To run the service using Docker Compose, execute the following command in the root directory of the project:
-
+Execute the following command in the root directory:
 ```bash
-docker-compose up
+docker-compose up --build -d
 ```
+Once the containers are up and running, the services will be available at:
 
-This will build the Docker image if it's not already built and start the application and the database. If you want to force a rebuild of the image, you can use:
+    Bank Account Core API: http://localhost:11056
 
+    Swagger UI (Core): http://localhost:11056/swagger-ui.html
+
+    Notification Service (Logs): http://localhost:11057
+
+Tip: You can monitor the asynchronous events by checking the notification service logs:
 ```bash
-docker-compose up --build
+
+docker-compose logs -f notification
 ```
+##🧪 Running Tests
 
-The application will be available at `http://localhost:11056`.
-
-## 🧪 Running Tests
-
-### Run All Tests
-
-To execute all unit and integration tests:
-
+To execute all unit and integration tests across all modules
 ```bash
 mvn test
 ```
-
-### Run Specific Test Classes
-
-To run a specific test class:
-
-```bash
-mvn test -Dtest=AccountServiceTest
-mvn test -Dtest=AccountControllerTest
-```
-
-### Run Tests with Coverage
-
-To run tests and generate a coverage report:
-
-```bash
-mvn clean test jacoco:report
-```
-
-The coverage report will be generated in `target/site/jacoco/index.html`.
-
-### Skip Tests During Build
-
 To build the project without running tests:
-
-```bash
 mvn clean install -DskipTests
-```
 
-## 📖 API Documentation
+##⚙️ Configuration
 
-The API documentation is available via Swagger UI at:
-
-[http://localhost:11056/swagger-ui.html](http://localhost:11056/swagger-ui.html)
-
-## ⚙️ Configuration
-
-The application can be configured via the `application.properties` file located in `src/main/resources`.
-
-Key configuration properties:
-
-- `server.port`: The port on which the application will run.
-- `spring.datasource.url`: The database connection URL.
-- `spring.datasource.username`: The database username.
-- `spring.datasource.password`: The database password.
-
-## 🙌 Contributing
+The applications can be configured via the application.properties files located in the src/main/resources folder of each respective module.
+For production deployment, refer to the PROD_CONFIG_SETUP.md document for instructions on securing environment variables.
+🙌 Contributing
 
 Contributions are welcome! Please feel free to submit a pull request or open an issue.
 
-1. Fork the repository.
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
-4. Push to the branch (`git push origin feature/AmazingFeature`).
-5. Open a pull request.
+    Fork the repository.
 
-## 📄 License
+    Create your feature branch (git checkout -b feature/AmazingFeature).
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+    Commit your changes (git commit -m 'Add some AmazingFeature').
+
+    Push to the branch (git push origin feature/AmazingFeature).
+
+    Open a pull request.
+
+##📄 License
+
+This project is licensed under the MIT License - see the LICENSE.md file for details.
