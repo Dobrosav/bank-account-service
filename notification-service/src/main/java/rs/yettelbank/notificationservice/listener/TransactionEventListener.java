@@ -25,7 +25,7 @@ public class TransactionEventListener {
                logger.info("Withdrawal of {} from account with ID {} received.", event.getAmount(), event.getAccountId());
                break;
            case TRANSFER:
-               logger.info("Transfer of {} from account with ID {} to account with ID {} received.", event.getAmount(), event.getAccountId(), event.getTargetAccountId());
+               logger.info("Transfer of {} from account with ID {} received.", event.getAmount(), event.getAccountId());
                break;
            default:
                logger.warn("Unknown transaction type: {}", event.getType());
