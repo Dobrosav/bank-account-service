@@ -203,6 +203,46 @@ public class AccountService {
         return mapToAccountResponseDTO(closedAccount);
     }
 
+    @Transactional
+    public AccountResponseDTO transferFunds(Long fromAccountId, Long toAccountId, BigDecimal amount) throws BadRequestException {
+        logger.info("Initiating transfer of {} from account ID {} to account ID {}", amount, fromAccountId, toAccountId);
+
+        if (fromAccountId.equals(toAccountId)) {
+            throw new BadRequestException("Cannot transfer funds to the same account.");
+        }
+
+        Account fromAccount = accountRepository.findById(fromAccountId)
+                .orElseThrow(() -> new AccountNotFoundException("Source account with ID " + fromAccountId + " not found."));
+
+        Account toAccount = accountRepository.findById(toAccountId)
+                .orElseThrow(() -> new AccountNotFoundException("Destination account with ID " + toAccountId + " not found."));
+
+        if (fromAccount.getStatus() != AccountStatus.ACTIVE || toAccount.getStatus() != AccountStatus.ACTIVE) {
+            throw new BadRequestException("Both source and destination accounts must be ACTIVE.");
+        }
+
+        if (fromAccount.getCurrency() != toAccount.getCurrency()) {
+            throw new BadRequestException("Cross-currency transfers are not supported yet.");
+        }
+
+        if (fromAccount.getBalance().compareTo(amount) < 0) {
+            throw new BadRequestException("Insufficient funds in the source account.");
+        }
+
+        fromAccount.setBalance(fromAccount.getBalance().subtract(amount));
+        toAccount.setBalance(toAccount.getBalance().add(amount));
+
+        accountRepository.save(fromAccount);
+        accountRepository.save(toAccount);
+
+        TransactionEventDTO event = new TransactionEventDTO(fromAccountId, amount, TransactionType.TRANSFER);
+        kafkaTemplate.send(TOPIC_NAME, String.valueOf(fromAccountId), event);
+        logger.info("Transfer successful. Event sent to Kafka topic {} for source account {}", TOPIC_NAME, fromAccountId);
+
+        return mapToAccountResponseDTO(fromAccount);
+    }
+
+
     private AccountResponseDTO mapToAccountResponseDTO(Account account) {
         return MapperDtoJpa.INSTANCE.mapToAccountResponseDTO(account);
     }
