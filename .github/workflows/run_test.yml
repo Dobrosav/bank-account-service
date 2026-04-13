@@ -3,7 +3,9 @@ name: Run Automated Tests
 
 on:
   pull_request:
-    branches: [ "main", "master" ]
+    branches: [ "master" ]
+  push:
+    branches: [ "master" ]
   workflow_dispatch:
 
 jobs:
