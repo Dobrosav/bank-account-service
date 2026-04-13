@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import rs.yettelbank.bankaccountservice.api.model.request.OpenAccountRequestDTO;
+import rs.yettelbank.bankaccountservice.api.model.request.TransferRequestDTO;
 import rs.yettelbank.bankaccountservice.api.model.request.UpdateAccountStatusRequestDTO;
 import rs.yettelbank.bankaccountservice.api.model.request.UpdateBalanceRequestDTO;
 import rs.yettelbank.bankaccountservice.api.model.response.AccountResponseDTO;
@@ -119,5 +120,21 @@ public class AccountController {
     public ResponseEntity<AccountResponseDTO> closeAccount(@PathVariable(name = "id") Long id) throws BadRequestException {
         AccountResponseDTO closedAccount = accountService.closeAccount(id);
         return ResponseEntity.ok(closedAccount);
+    }
+
+    @Operation(summary = "Transfer funds between two accounts")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Transfer successful"),
+            @ApiResponse(responseCode = "400", description = "Invalid input, insufficient funds, or currency mismatch"),
+            @ApiResponse(responseCode = "404", description = "One or both accounts not found")
+    })
+    @PostMapping("/transfer")
+    public ResponseEntity<AccountResponseDTO> transfer(@Valid @RequestBody TransferRequestDTO request) throws BadRequestException {
+        AccountResponseDTO updatedSourceAccount = accountService.transferFunds(
+                request.getFromAccountId(),
+                request.getToAccountId(),
+                request.getAmount()
+        );
+        return ResponseEntity.ok(updatedSourceAccount);
     }
 }

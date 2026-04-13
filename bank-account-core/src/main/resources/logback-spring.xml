@@ -24,6 +24,7 @@
     </appender>
 
     <logger name="rs.yettelbank.bankaccountservice" level="DEBUG"/>
+    <logger name="com.microsoft.sqlserver.jdbc" level="WARN"/>
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>

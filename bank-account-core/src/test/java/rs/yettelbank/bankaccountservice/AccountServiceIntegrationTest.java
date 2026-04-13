@@ -4,6 +4,9 @@ import org.apache.coyote.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.kafka.core.KafkaTemplate;
+import rs.yettelbank.bankaccountservice.api.model.event.TransactionEventDTO;
 import rs.yettelbank.bankaccountservice.api.model.request.OpenAccountRequestDTO;
 import rs.yettelbank.bankaccountservice.api.model.response.AccountResponseDTO;
 import rs.yettelbank.bankaccountservice.db.entity.Account;
@@ -24,6 +27,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AccountServiceIntegrationTest extends FullIntegrationTest {
+
+    @MockBean
+    private KafkaTemplate<String, TransactionEventDTO> kafkaTemplate;
 
     @Autowired
     private AccountService accountService;
@@ -206,5 +212,111 @@ class AccountServiceIntegrationTest extends FullIntegrationTest {
 
         assertNotNull(response);
         assertEquals(2, response.size());
+    }
+
+    @Test
+    void transferFunds_Success() throws BadRequestException {
+        OpenAccountRequestDTO fromRequest = new OpenAccountRequestDTO();
+        fromRequest.setClientId(100L);
+        fromRequest.setAccountType(AccountType.CURRENT);
+        AccountResponseDTO fromAccount = accountService.openNewAccount(fromRequest);
+        accountService.updateAccountStatus(fromAccount.getId(), AccountStatus.ACTIVE);
+        accountService.updateAccountBalance(fromAccount.getId(), BigDecimal.valueOf(1000), TransactionType.DEPOSIT);
+
+        OpenAccountRequestDTO toRequest = new OpenAccountRequestDTO();
+        toRequest.setClientId(200L);
+        toRequest.setAccountType(AccountType.CURRENT);
+        AccountResponseDTO toAccount = accountService.openNewAccount(toRequest);
+        accountService.updateAccountStatus(toAccount.getId(), AccountStatus.ACTIVE);
+
+        AccountResponseDTO response = accountService.transferFunds(fromAccount.getId(), toAccount.getId(), BigDecimal.valueOf(300));
+
+        assertNotNull(response);
+        assertThat(response.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(700));
+
+        AccountResponseDTO destinationAccount = accountService.getAccountById(toAccount.getId());
+        assertThat(destinationAccount.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(300));
+    }
+
+    @Test
+    void transferFunds_SameAccount_ThrowsException() throws BadRequestException {
+        OpenAccountRequestDTO request = new OpenAccountRequestDTO();
+        request.setClientId(100L);
+        request.setAccountType(AccountType.CURRENT);
+        AccountResponseDTO account = accountService.openNewAccount(request);
+        accountService.updateAccountStatus(account.getId(), AccountStatus.ACTIVE);
+
+        assertThrows(BadRequestException.class, () ->
+                accountService.transferFunds(account.getId(), account.getId(), BigDecimal.valueOf(100)));
+    }
+
+    @Test
+    void transferFunds_SourceAccountNotFound() {
+        assertThrows(Exception.class, () ->
+                accountService.transferFunds(999L, 100L, BigDecimal.valueOf(100)));
+    }
+
+    @Test
+    void transferFunds_DestinationAccountNotFound() throws BadRequestException {
+        OpenAccountRequestDTO request = new OpenAccountRequestDTO();
+        request.setClientId(100L);
+        request.setAccountType(AccountType.CURRENT);
+        AccountResponseDTO account = accountService.openNewAccount(request);
+        accountService.updateAccountStatus(account.getId(), AccountStatus.ACTIVE);
+
+        assertThrows(Exception.class, () ->
+                accountService.transferFunds(account.getId(), 999L, BigDecimal.valueOf(100)));
+    }
+
+    @Test
+    void transferFunds_SourceAccountNotActive_ThrowsException() throws BadRequestException {
+        OpenAccountRequestDTO fromRequest = new OpenAccountRequestDTO();
+        fromRequest.setClientId(100L);
+        fromRequest.setAccountType(AccountType.CURRENT);
+        AccountResponseDTO fromAccount = accountService.openNewAccount(fromRequest);
+
+        OpenAccountRequestDTO toRequest = new OpenAccountRequestDTO();
+        toRequest.setClientId(200L);
+        toRequest.setAccountType(AccountType.CURRENT);
+        AccountResponseDTO toAccount = accountService.openNewAccount(toRequest);
+        accountService.updateAccountStatus(toAccount.getId(), AccountStatus.ACTIVE);
+
+        assertThrows(BadRequestException.class, () ->
+                accountService.transferFunds(fromAccount.getId(), toAccount.getId(), BigDecimal.valueOf(100)));
+    }
+
+    @Test
+    void transferFunds_DestinationAccountNotActive_ThrowsException() throws BadRequestException {
+        OpenAccountRequestDTO fromRequest = new OpenAccountRequestDTO();
+        fromRequest.setClientId(100L);
+        fromRequest.setAccountType(AccountType.CURRENT);
+        AccountResponseDTO fromAccount = accountService.openNewAccount(fromRequest);
+        accountService.updateAccountStatus(fromAccount.getId(), AccountStatus.ACTIVE);
+
+        OpenAccountRequestDTO toRequest = new OpenAccountRequestDTO();
+        toRequest.setClientId(200L);
+        toRequest.setAccountType(AccountType.CURRENT);
+        AccountResponseDTO toAccount = accountService.openNewAccount(toRequest);
+
+        assertThrows(BadRequestException.class, () ->
+                accountService.transferFunds(fromAccount.getId(), toAccount.getId(), BigDecimal.valueOf(100)));
+    }
+
+    @Test
+    void transferFunds_InsufficientFunds_ThrowsException() throws BadRequestException {
+        OpenAccountRequestDTO fromRequest = new OpenAccountRequestDTO();
+        fromRequest.setClientId(100L);
+        fromRequest.setAccountType(AccountType.CURRENT);
+        AccountResponseDTO fromAccount = accountService.openNewAccount(fromRequest);
+        accountService.updateAccountStatus(fromAccount.getId(), AccountStatus.ACTIVE);
+
+        OpenAccountRequestDTO toRequest = new OpenAccountRequestDTO();
+        toRequest.setClientId(200L);
+        toRequest.setAccountType(AccountType.CURRENT);
+        AccountResponseDTO toAccount = accountService.openNewAccount(toRequest);
+        accountService.updateAccountStatus(toAccount.getId(), AccountStatus.ACTIVE);
+
+        assertThrows(BadRequestException.class, () ->
+                accountService.transferFunds(fromAccount.getId(), toAccount.getId(), BigDecimal.valueOf(1000)));
     }
 }

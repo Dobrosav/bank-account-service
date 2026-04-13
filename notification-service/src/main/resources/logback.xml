@@ -9,7 +9,7 @@
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>/app/logs/notification-service.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>/app/logs/notification-service.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>/app/logs/archived/notification-service.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
