@@ -100,7 +100,7 @@ Tip: You can monitor the asynchronous events by checking the notification servic
 
 docker-compose logs -f notification
 ```
-##🧪 Running Tests
+## 🧪 Running Tests
 
 To execute all unit and integration tests across all modules
 ```bash
@@ -109,7 +109,7 @@ mvn test
 To build the project without running tests:
 mvn clean install -DskipTests
 
-##⚙️ Configuration
+## ⚙️ Configuration
 
 The applications can be configured via the application.properties files located in the src/main/resources folder of each respective module.
 For production deployment, refer to the PROD_CONFIG_SETUP.md document for instructions on securing environment variables.
@@ -127,6 +127,6 @@ Contributions are welcome! Please feel free to submit a pull request or open an 
 
     Open a pull request.
 
-##📄 License
+## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE.md file for details.
