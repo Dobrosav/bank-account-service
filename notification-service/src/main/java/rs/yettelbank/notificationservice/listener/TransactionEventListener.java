@@ -17,10 +17,19 @@ public class TransactionEventListener {
     @KafkaListener(topics = "bank-transactions", groupId = "notification-group")
     public void handleTransactionEvent(TransactionEventDTO event) {
        logger.info("Received transaction event: {}", event);
-
-
-        if (event.getType()== TransactionType.WITHDRAWAL && event.getAmount().compareTo(new BigDecimal("10000")) > 0) {
-            logger.info("Sending notification for withdrawal of {}", event.getAmount());
-        }
+       switch (event.getType()) {
+           case DEPOSIT:
+               logger.info("Deposit of {} to account with ID {} received.", event.getAmount(), event.getAccountId());
+               break;
+           case WITHDRAWAL:
+               logger.info("Withdrawal of {} from account with ID {} received.", event.getAmount(), event.getAccountId());
+               break;
+           case TRANSFER:
+               logger.info("Transfer of {} from account with ID {} received.", event.getAmount(), event.getAccountId());
+               break;
+           default:
+               logger.warn("Unknown transaction type: {}", event.getType());
+               break;
+       }
     }
 }
