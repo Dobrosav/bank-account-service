@@ -1,7 +1,5 @@
-version: '3.8'
-
 services:
-  app:
+  app_bank:
     build:
       context: .
       dockerfile: Dockerfile.bank
