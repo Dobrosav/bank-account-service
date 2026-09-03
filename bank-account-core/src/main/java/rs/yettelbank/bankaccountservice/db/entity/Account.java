@@ -15,6 +15,11 @@ public class Account {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Za auto-increment u MS SQL Serveru
     private Long id;
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
+
     @Column(name = "account_number", nullable = false, unique = true)
     private String accountNumber;
 
@@ -133,6 +138,14 @@ public class Account {
 
     public void setInterestRate(BigDecimal interestRate) {
         this.interestRate = interestRate;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 
     @Override
