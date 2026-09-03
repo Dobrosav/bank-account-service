@@ -23,8 +23,8 @@ public class OpenApiConfig {
                         .contact(new Contact().name("API Support").url("http://www.example.com/support").email("support@example.com"))
                         .license(new License().name("Apache 2.0").url("http://www.apache.org/licenses/LICENSE-2.0.html")))
                 .servers(List.of(
-                        new Server().url("https://api.production.com/v1").description("Produkciono okruženje"),
-                        new Server().url("https://api.staging.com/v1").description("Testno okruženje")
+                        new Server().url("http://bank-app-alb-952876333.eu-north-1.elb.amazonaws.com").description("Produkciono okruženje (ALB)"),
+                        new Server().url("http://localhost:11056").description("Lokalno okruženje")
                 ));
     }
 }
