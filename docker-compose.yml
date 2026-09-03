@@ -16,6 +16,8 @@ services:
       - ./logs:/app/logs
 
   notification:
+    profiles:
+      - primary
     build:
       context: .
       dockerfile: Dockerfile.notification
@@ -33,6 +35,8 @@ services:
 
   kafka:
     image: apache/kafka:3.7.0
+    profiles:
+      - primary
     ports:
       - "9092:9092"
     environment:
