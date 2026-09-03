@@ -89,13 +89,13 @@ The ecosystem has been migrated to AWS for high availability and scalability:
 - Maven 3.6+
 - Docker & Docker Compose
 
-### Running the Ecosystem (Docker Compose)
+### Running the Ecosystem Locally (Full Stack)
 
-The easiest way to start the entire system (Database, Kafka Broker, Core Service, and Notification Service) is via Docker Compose.
+To run the entire system locally from scratch (including a local MS SQL database and Kafka broker), a dedicated `docker-compose.local.yml` is provided.
 
 Execute the following command in the root directory:
 ```bash
-docker-compose up --build -d
+docker compose -f docker-compose.local.yml up --build -d
 ```
 Once the containers are up and running, the services will be available at:
 
