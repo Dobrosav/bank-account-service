@@ -8,14 +8,15 @@ This repository demonstrates a modern, scalable enterprise architecture. It feat
 
 ## 🏗️ Architecture: From Monolith to Event-Driven
 
-This project showcases the evolution from a traditional monolithic application to a decoupled, event-driven architecture. 
+This project showcases the evolution from a traditional monolithic application to a decoupled, event-driven architecture, now fully deployed on **AWS**. 
 
 The system currently consists of two independent microservices communicating asynchronously via a message broker:
 
-1. **Bank Account Core (`bank-account-core`)**: The primary **Producer** service. It handles HTTP requests, executes core business logic (creating accounts, processing deposits/withdrawals), persists data to an MS SQL database, and publishes `TransactionEvent` messages to a Kafka topic.
+1. **Bank Account Core (`bank-account-core`)**: The primary **Producer** service. It handles HTTP requests, executes core business logic (creating accounts, processing deposits/withdrawals), persists data to an **AWS RDS (MS SQL)** database, and publishes `TransactionEvent` messages to a Kafka topic.
 2. **Notification Service (`notification-service`)**: The **Consumer** service. It independently listens to the Kafka topic. If it detects a specific business event (e.g., a withdrawal exceeding a defined threshold of 10,000), it triggers a notification workflow without impacting or blocking the core banking service.
 
 **Message Broker:** Apache Kafka (running in modern KRaft mode).
+**Cloud Infrastructure:** AWS EC2 (Application Nodes), AWS RDS (Database), AWS ALB (Application Load Balancer).
 
 ---
 
@@ -47,6 +48,13 @@ To ensure true microservice isolation, standardizing deployments was necessary:
 * Created specific Dockerfiles (`Dockerfile.bank` and `Dockerfile.notification`) utilizing multi-stage Maven builds.
 * Orchestrated the entire ecosystem through `docker-compose.yml`, allowing both services to build and communicate over a shared internal Docker network.
 
+### Step 6: AWS Cloud Deployment & CI/CD
+The ecosystem has been migrated to AWS for high availability and scalability:
+* **Database:** Migrated from local Docker to managed **AWS RDS (SQL Server)**.
+* **Compute:** Deployed across multiple **AWS EC2 instances** (Primary and Worker nodes).
+* **Traffic Routing:** An **AWS Application Load Balancer (ALB)** routes incoming HTTP traffic to the active EC2 nodes and performs health checks.
+* **CI/CD:** Automated deployment pipelines built with **GitHub Actions**. Upon merging to `master`, the pipeline tests the application and automatically deploys the latest containers to the EC2 instances.
+
 ---
 
 ## ✨ Features
@@ -68,9 +76,11 @@ To ensure true microservice isolation, standardizing deployments was necessary:
 - **Spring Kafka**: Spring integration for Kafka producers and consumers
 - **Spring MVC & Data JPA**: Web and data persistence layers
 - **Jakarta EE**: Enterprise Java specifications
-- **MS SQL Server**: Relational database
+- **AWS RDS (MS SQL Server)**: Relational database
 - **Swagger/OpenAPI 3**: API documentation
 - **Docker & Docker Compose**: Containerization and orchestration
+- **GitHub Actions**: CI/CD Pipeline
+- **AWS EC2 & ALB**: Cloud infrastructure and load balancing
 
 ## 🚀 Getting Started
 
@@ -90,10 +100,13 @@ docker-compose up --build -d
 Once the containers are up and running, the services will be available at:
 
     Bank Account Core API: http://localhost:11056
-
-    Swagger UI (Core): http://localhost:11056/swagger-ui.html
-
+    Swagger UI (Core): http://localhost:11056/swagger-ui/index.html
     Notification Service (Logs): http://localhost:11057
+
+### Production Environment (AWS)
+
+The live production application is fronted by an Application Load Balancer:
+    **Swagger UI:** http://bank-app-alb-952876333.eu-north-1.elb.amazonaws.com/swagger-ui/index.html
 
 Tip: You can monitor the asynchronous events by checking the notification service logs:
 ```bash
