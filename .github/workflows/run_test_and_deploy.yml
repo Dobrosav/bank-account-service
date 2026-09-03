@@ -69,7 +69,7 @@ jobs:
 
   deploy-node2:
     name: Deploy to Worker Node
-    needs: test
+    needs: [test, deploy-node1]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
     steps:
